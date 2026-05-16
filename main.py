@@ -40,22 +40,24 @@ def browser_cookies():
 
         logger.info(f'Cookies assigned to us: {len(session.cookies)}\n')
 
-    for x, y in session.cookies.items():
-        logger.info(f'{x}: {y}')
-        cookies[x] = y
-    logger.info('\n')
+        for x, y in session.cookies.items():
+            logger.info(f'{x}: {y}')
+            cookies[x] = y
 
-    logger.info('Cookies has been saved to a "cookies.json" file in the local directory!\n')
+        logger.info('\n')
+        logger.info('Cookies has been saved to a "cookies.json" file in the local directory!\n')
 
 
 if os.path.exists('cookies.json'):
 
     with open('cookies.json', 'r') as f:
         reuse_cookies = json.load(f)
-        session.cookies.update = httpx.Cookies(reuse_cookies)
+        session.cookies.update(httpx.Cookies(reuse_cookies))
 
     logger.info('"Cookies.json" file exists! Reloading cookies...\n')
-
+    for x, y in session.cookies.items():
+        logger.info(f'{x}: {y}')
+    logger.info('\n')
 
 fetch_website(url, 120)
 browser_cookies()
