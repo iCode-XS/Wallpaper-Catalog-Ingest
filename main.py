@@ -16,7 +16,7 @@ url = 'https://www.yorkwallcoverings.com/wallpaper-york'
 session = httpx.Client(headers=user_agents.chromium_linux, http2=True)
 
 
-def fetch_website(link, timeout):
+def fetch_website(link, timeout):   # Fetching the website from the server
 
     try:
         response = session.get(link, timeout=timeout)
@@ -32,11 +32,11 @@ def fetch_website(link, timeout):
 cookies = {}
 
 
-def browser_cookies():
+def browser_cookies():  # This function looks and saves the cookies in a 'cookie.json' file - presented by a server
 
-    if not os.path.exists('cookies.json'):
-        with open('cookies.json', 'w') as f:
-            json.dump(cookies, f, indent=4)
+    if not os.path.exists('cookies.json'):  # This if statement is checking if 'cookie.json' file exists or not
+        with open('cookies.json', 'w') as f:    # If it doesn't exist, it will save all the cookies in a 'cookie.json' file
+            json.dump(cookies, f, indent=4)     # If it does exist then this entire block will not run by python
 
         logger.info(f'Cookies assigned to us: {len(session.cookies)}\n')
 
@@ -48,10 +48,10 @@ def browser_cookies():
         logger.info('Cookies has been saved to a "cookies.json" file in the local directory!\n')
 
 
-if os.path.exists('cookies.json'):
+if os.path.exists('cookies.json'):  # This if statement is checking if a 'cookies.json' file exists or not
 
-    with open('cookies.json', 'r') as f:
-        reuse_cookies = json.load(f)
+    with open('cookies.json', 'r') as f:    # If that file exists then it will reuse the cookies
+        reuse_cookies = json.load(f)        # If not then this will not run by python
         session.cookies.update(httpx.Cookies(reuse_cookies))
 
     logger.info('"Cookies.json" file exists! Reloading cookies...\n')
