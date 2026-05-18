@@ -63,34 +63,50 @@ if os.path.exists('cookies.json'):  # This if statement is checking if a 'cookie
 
 
 @logger.catch
-def parsing_site(response):
+def parsing_site(httpx_object):
     try:
         soup = BeautifulSoup(response, 'lxml')
-        logger.info('Parsing has been successful!')
+        logger.info('Parsing has been successful!\n')
         return soup
 
     except Exception as e:
         logger.critical('The parsing of HTML document has been failed... The script will not be able to hold without this function!', e)
 
-@logger.catch
-def main_page_ingest(soup):
-    try:
-        item_box = soup.find_all('div', class_='item-box')
-        for x in item_box:
-            title_container = x.find('h3', class_='product-title')
-            title = title_container.find('a').text
-            price_container = x.find('div', class_='prices')
-            price = price_container.find('span', class_='price actual-price avoid-wrap').text
-            actual_price = price.strip('Actual Price:USD ')
-            print('Name:', title)
-            print('Price:', actual_price)
-            print('\n')
 
-    except Exception as e:
-        logger.error('There is a problem in retrieving data from main_page!', e)
+def main_page_ingest(bs4_object, list_name):
+    item_box = soup.find_all('div', class_='item-box')
+    print('Number of items in the page:', len(item_box))
+    print('\n')
+    print('York Wallcoverings Wallpaper Catalog Showcase:\n')
+
+    for x in item_box:
+        title_container = x.find('h3', class_='product-title')
+        title = title_container.find('a').text
+        price_container = x.find('div', class_='prices')
+        price = price_container.find('span', class_='price actual-price avoid-wrap').text
+        actual_price = price.strip('Actual Price:USD ')
+
+        product_container = x.find('div', class_='picture')
+        product_link = product_container.find('a')['href']
+
+        base_url = 'www.yorkwallcoverings.com'
+        
+        print('Name:', title)
+        print('Price:', actual_price)
+        print('Link:', base_url + product_link)
+        print('\n')
+
+        list_name.append(base_url + product_link)
+
+
+
+product_website = []
 
 response = fetch_website(url, 120)
 browser_cookies()
 soup = parsing_site(response)
-wallpaper = main_page_ingest(soup)
+wallpaper = main_page_ingest(soup, product_website)
+
+print('The total number of products that should be present:', len(product_website))
+
 session.close()
