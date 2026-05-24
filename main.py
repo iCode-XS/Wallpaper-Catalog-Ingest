@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 import httpx
 from bs4 import BeautifulSoup
 from loguru import logger
@@ -15,6 +14,7 @@ url = 'https://www.yorkwallcoverings.com/wallpaper-york'
 
 session = httpx.Client(headers=user_agents.chromium_linux, http2=True)
 
+
 @logger.catch
 def fetch_website(link, timeout):   # Fetching the website from the server
 
@@ -28,7 +28,7 @@ def fetch_website(link, timeout):   # Fetching the website from the server
 
     except httpx.HTTPStatusError as e:
         logger.error(f'HTTP Request Error Occured! Status Code: {e.response.status_code} | {e.response.url}')
-    
+
 
 cookies = {}
 
@@ -50,18 +50,6 @@ def browser_cookies():  # This function looks and saves the cookies in a 'cookie
         logger.info('Cookies has been saved to a "cookies.json" file in the local directory!\n')
 
 
-if os.path.exists('cookies.json'):  # This if statement is checking if a 'cookies.json' file exists or not
-
-    with open('cookies.json', 'r') as f:    # If that file exists then it will reuse the cookies
-        reuse_cookies = json.load(f)
-        session.cookies.update(httpx.Cookies(reuse_cookies))
-
-    logger.info('"Cookies.json" file exists! Reloading cookies...\n')
-    for x, y in session.cookies.items():
-        logger.info(f'{x}: {y}')
-    logger.info('\n')
-
-
 @logger.catch
 def parsing_site(httpx_object):
     try:
@@ -74,10 +62,11 @@ def parsing_site(httpx_object):
 
 
 def main_page_ingest(bs4_object, list_name):
-    item_box = soup.find_all('div', class_='item-box')
+    item_box = bs4_object.find_all('div', class_='item-box')
     print('Number of items in the page:', len(item_box))
     print('\n')
     print('York Wallcoverings Wallpaper Catalog Showcase:\n')
+    print('\n')
 
     for x in item_box:
         title_container = x.find('h3', class_='product-title')
@@ -89,15 +78,54 @@ def main_page_ingest(bs4_object, list_name):
         product_container = x.find('div', class_='picture')
         product_link = product_container.find('a')['href']
 
-        base_url = 'www.yorkwallcoverings.com'
-        
+        product_id = x.find('div', class_='product-item ViewProduct').get('data-productid', 'N/A')
+
+
+        base_url = 'https://www.yorkwallcoverings.com'
+
         print('Name:', title)
         print('Price:', actual_price)
         print('Link:', base_url + product_link)
+        print('Product ID:', product_id)
         print('\n')
 
-        list_name.append(base_url + product_link)
+        list_name.append(base_url + product_link) 
 
+
+def link_harvester():
+    pass
+
+
+def product_page_ingest(links_list):
+
+    while links_list:
+
+        popped_url = links_list.pop(0)
+        current_url = popped_url
+        print('Popped_URL:', current_url)
+        print('\n')
+        product_page = fetch_website(current_url, 30)
+        product_page_parse = parsing_site(product_page)
+
+        with open('product.html', 'w', encoding='utf-8') as f:
+
+            f.write(product_page_parse.prettify())
+
+        print('Your .html has been saved successfully!')
+
+        break
+
+
+if os.path.exists('cookies.json'):  # This if statement is checking if a 'cookies.json' file exists or not
+
+    with open('cookies.json', 'r') as f:    # If that file exists then it will reuse the cookies
+        reuse_cookies = json.load(f)
+        session.cookies.update(httpx.Cookies(reuse_cookies))
+
+    logger.info('"Cookies.json" file exists! Reloading cookies...\n')
+    for x, y in session.cookies.items():
+        logger.info(f'{x}: {y}')
+    logger.info('\n')
 
 
 product_website = []
@@ -107,6 +135,5 @@ browser_cookies()
 soup = parsing_site(response)
 wallpaper = main_page_ingest(soup, product_website)
 
-print('The total number of products that should be present:', len(product_website))
 
 session.close()
