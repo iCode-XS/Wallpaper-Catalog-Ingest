@@ -6,13 +6,14 @@ from loguru import logger
 import user_agents
 import json
 import os
+import time
 
 logger.add('scraper.log', rotation='10 MB')
 
 
 url = 'https://www.yorkwallcoverings.com/wallpaper-york'
 
-session = httpx.Client(headers=user_agents.chromium_linux, http2=True)
+session = httpx.Client(headers=user_agents.brave_linux, http2=True)
 
 
 @logger.catch
@@ -29,6 +30,19 @@ def fetch_website(link, timeout):   # Fetching the website from the server
     except httpx.HTTPStatusError as e:
         logger.error(f'HTTP Request Error Occured! Status Code: {e.response.status_code} | {e.response.url}')
 
+@logger.catch
+def post_website(link, timeout, payload):
+
+    try:
+        response = session.post(link, timeout=timeout, data=payload)
+        response.raise_for_status()
+        logger.info(f'Success! The post has been successfully delivered to the server...\n')
+        logger.info(f'Target Site: {response.url}')
+        logger.info(f'Status Code: {response.status_code}')
+        return response
+        
+    except httpx.HTTPStatusError as e:
+        logger.error(f'Failed to retrieve SKU Number! Status Code: {e.response.status_code} | {e.response.url}')
 
 cookies = {}
 
@@ -61,12 +75,12 @@ def parsing_site(httpx_object):
         logger.critical('The parsing of HTML document has been failed... The script will not be able to hold without this function!', e)
 
 
-def main_page_ingest(bs4_object, list_name):
+def main_page_ingest(bs4_object, website_list):
     item_box = bs4_object.find_all('div', class_='item-box')
     print('Number of items in the page:', len(item_box))
     print('\n')
-    print('York Wallcoverings Wallpaper Catalog Showcase:\n')
-    print('\n')
+    print('York Wallcoverings Wallpaper Catalog Showcase:')
+    print()
 
     for x in item_box:
         title_container = x.find('h3', class_='product-title')
@@ -78,25 +92,31 @@ def main_page_ingest(bs4_object, list_name):
         product_container = x.find('div', class_='picture')
         product_link = product_container.find('a')['href']
 
-        product_id = x.find('div', class_='product-item ViewProduct').get('data-productid', 'N/A')
+        product_sku_number = product_container.find('a')['onclick']
 
+        strip_product_prefix = product_sku_number.removeprefix('productClick("')
+        strip_product_suffix = strip_product_prefix.removesuffix(')"')
+        strip_product = strip_product_suffix.strip()
+        split_product = strip_product.split(',')
+        sku_number = split_product[1]
+        sku_number_cleaned = sku_number.removesuffix('SAM')
+        sku_number_final = sku_number_cleaned.upper()
 
         base_url = 'https://www.yorkwallcoverings.com'
 
-        print('Name:', title)
+        '''print('Name:', title)
         print('Price:', actual_price)
         print('Link:', base_url + product_link)
-        print('Product ID:', product_id)
-        print('\n')
+        # print('SKU Info:', product_sku_number)
+        # print('Cleaned SKU Info:', strip_product)
+        # print('Scram SKU Info:', split_product)
+        print('Extracted SKU Number:', sku_number_final)
+        print()'''
+        
+        website_list.append(base_url + product_link + '/' + sku_number_final)
 
-        list_name.append(base_url + product_link) 
 
-
-def link_harvester():
-    pass
-
-
-def product_page_ingest(links_list):
+'''def product_page_ingest(links_list):
 
     while links_list:
 
@@ -114,6 +134,7 @@ def product_page_ingest(links_list):
         print('Your .html has been saved successfully!')
 
         break
+'''
 
 
 if os.path.exists('cookies.json'):  # This if statement is checking if a 'cookies.json' file exists or not
@@ -131,9 +152,13 @@ if os.path.exists('cookies.json'):  # This if statement is checking if a 'cookie
 product_website = []
 
 response = fetch_website(url, 120)
+time.sleep(3)
 browser_cookies()
 soup = parsing_site(response)
+time.sleep(2)
 wallpaper = main_page_ingest(soup, product_website)
-
+print()
+for x in product_website:
+    print(x)
 
 session.close()
