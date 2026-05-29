@@ -30,19 +30,6 @@ def fetch_website(link, timeout):   # Fetching the website from the server
     except httpx.HTTPStatusError as e:
         logger.error(f'HTTP Request Error Occured! Status Code: {e.response.status_code} | {e.response.url}')
 
-@logger.catch
-def post_website(link, timeout, payload):
-
-    try:
-        response = session.post(link, timeout=timeout, data=payload)
-        response.raise_for_status()
-        logger.info(f'Success! The post has been successfully delivered to the server...\n')
-        logger.info(f'Target Site: {response.url}')
-        logger.info(f'Status Code: {response.status_code}')
-        return response
-        
-    except httpx.HTTPStatusError as e:
-        logger.error(f'Failed to retrieve SKU Number! Status Code: {e.response.status_code} | {e.response.url}')
 
 cookies = {}
 
@@ -116,25 +103,52 @@ def main_page_ingest(bs4_object, website_list):
         website_list.append(base_url + product_link + '/' + sku_number_final)
 
 
-'''def product_page_ingest(links_list):
+def product_page_ingest(links_list):
 
     while links_list:
 
         popped_url = links_list.pop(0)
         current_url = popped_url
         print('Popped_URL:', current_url)
-        print('\n')
-        product_page = fetch_website(current_url, 30)
-        product_page_parse = parsing_site(product_page)
+        print()
+        response = session.get(current_url, timeout=25)
+        soup = BeautifulSoup(response.text, 'lxml')
+        with open('product.html', 'w') as f:
+            f.write(soup.prettify())
+            print('The soup document has been saved into an HTML file')
 
-        with open('product.html', 'w', encoding='utf-8') as f:
+        product_container = soup.find_all('div', class_='product-essential')
 
-            f.write(product_page_parse.prettify())
+        for x in product_container:
 
-        print('Your .html has been saved successfully!')
+            title = x.find('div', class_='product-name').text
 
-        break
-'''
+            brand_container = x.find('div', class_='manufacturers')
+            brand = brand_container.find('span', itemprop='brand').text
+
+            availability_container = x.find('div', class_='availability')
+            availability = availability_container.find('span', class_='value').text if availability_container else 'N/A'
+
+            sku_container = x.find('div', class_='sku')
+            sku = sku_container.find('span', class_='value').text if sku_container else 'N/A'
+
+            collection_container = x.find('div', class_='collection')
+            collection = collection_container.find('a').text if collection_container else 'N/A'
+
+            price_container = x.find('div', class_='prices')
+            price = price_container.find('span', class_='label') if price_container else 'N/A'
+            price_main = price.find_next_sibling().text if price_container else 'N/A'
+            actual_price = price_main.removeprefix(' USD ').strip() if price_container else 'N/A'
+
+            print()
+            print('SKU:', sku)
+            print('Product Name:', title)
+            print('Brand:', brand)
+            print('Collection:', collection)
+            print('Availability:', availability)
+            print('Price:', actual_price)
+            print()
+
 
 
 if os.path.exists('cookies.json'):  # This if statement is checking if a 'cookies.json' file exists or not
@@ -158,7 +172,8 @@ soup = parsing_site(response)
 time.sleep(2)
 wallpaper = main_page_ingest(soup, product_website)
 print()
-for x in product_website:
-    print(x)
+
+product_info = product_page_ingest(product_website)
+
 
 session.close()
