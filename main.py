@@ -144,6 +144,9 @@ def product_page_ingest(links_list):
             size_ul = size_container.find('ul', class_='option-list button-list') if size_container else None
             sizes = size_ul.find_all('li') if size_ul else []
 
+            image_container = x.find('div', class_='picture-wrapper')
+            image = image_container.find('a')['href'] if image_container else 'N/A'
+
             print()
             print('SKU:', sku)
             print('Product Name:', title)
@@ -157,7 +160,7 @@ def product_page_ingest(links_list):
                 target = item.find('label')
 
                 if 'out-of-stock-variant' in item.get('class', []):
-                    print('Another Size: N/A as option')
+                    print('Size Option: N/A')
 
                 else:
                     print(f'Size {num}: {target.text}')
@@ -177,6 +180,7 @@ def product_page_ingest(links_list):
                         info = td_info.text.strip()
                         print(f'{name}: {info}')
 
+            print('Image URL:', image)
             print()
 
 
