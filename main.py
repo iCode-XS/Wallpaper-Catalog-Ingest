@@ -140,6 +140,10 @@ def product_page_ingest(links_list):
             price_main = price.find_next_sibling().text if price_container else 'N/A'
             actual_price = price_main.removeprefix(' USD ').strip() if price_container else 'N/A'
 
+            size_container = x.find('div', class_='attributes')
+            size_ul = size_container.find('ul', class_='option-list button-list') if size_container else None
+            sizes = size_ul.find_all('li') if size_ul else []
+
             print()
             print('SKU:', sku)
             print('Product Name:', title)
@@ -147,8 +151,33 @@ def product_page_ingest(links_list):
             print('Collection:', collection)
             print('Availability:', availability)
             print('Price:', actual_price)
-            print()
 
+            for num, item in enumerate(sizes, 1):
+
+                target = item.find('label')
+
+                if 'out-of-stock-variant' in item.get('class', []):
+                    print('Another Size: N/A as option')
+
+                else:
+                    print(f'Size {num}: {target.text}')
+
+            table = soup.find('table', class_='data-table')
+
+            if table:
+                tr = table.find_all('tr')
+
+                for item in tr:
+
+                    td_name = item.find('td', class_='spec-name')
+                    td_info = item.find('td', class_='spec-value')
+
+                    if td_name and td_info:
+                        name = td_name.text.strip()
+                        info = td_info.text.strip()
+                        print(f'{name}: {info}')
+
+            print()
 
 
 if os.path.exists('cookies.json'):  # This if statement is checking if a 'cookies.json' file exists or not
