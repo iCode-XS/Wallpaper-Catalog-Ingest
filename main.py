@@ -7,6 +7,7 @@ import user_agents
 import json
 import os
 import time
+import pandas as pd
 
 logger.add('scraper.log', rotation='10 MB')
 
@@ -99,27 +100,31 @@ def main_page_ingest(bs4_object, website_list):
         # print('Scram SKU Info:', split_product)
         print('Extracted SKU Number:', sku_number_final)
         print()'''
-        
+
         website_list.append(base_url + product_link + '/' + sku_number_final)
 
 
-def product_page_ingest(links_list):
+def product_page_ingest(links_list, save_list):
 
     while links_list:
 
         popped_url = links_list.pop(0)
         current_url = popped_url
-        print('Popped_URL:', current_url)
-        print()
+
+        # print('Popped_URL:', current_url)
+        # print()
+
         response = session.get(current_url, timeout=25)
         soup = BeautifulSoup(response.text, 'lxml')
-        with open('product.html', 'w') as f:
-            f.write(soup.prettify())
-            print('The soup document has been saved into an HTML file')
+
+        '''with open('product.html', 'w') as f:
+            f.write(soup.prettify())'''
 
         product_container = soup.find_all('div', class_='product-essential')
 
         for x in product_container:
+
+            capture = {}
 
             title = x.find('div', class_='product-name').text
 
@@ -147,7 +152,7 @@ def product_page_ingest(links_list):
             image_container = x.find('div', class_='picture-wrapper')
             image = image_container.find('a')['href'] if image_container else 'N/A'
 
-            print()
+            '''print()
             print('SKU:', sku)
             print('Product Name:', title)
             print('Brand:', brand)
@@ -181,7 +186,41 @@ def product_page_ingest(links_list):
                         print(f'{name}: {info}')
 
             print('Image URL:', image)
-            print()
+            print()'''
+
+            capture['SKU Number'] = sku
+            capture['Name'] = title
+            capture['Price'] = actual_price
+            capture['Brand'] = brand
+            capture['Collection'] = collection
+            capture['Availablity'] = availability
+            capture['Image URL'] = image
+
+            for num, item in enumerate(sizes, 1):
+
+                target = item.find('label')
+
+                if 'out-of-stock-variant' in item.get('class', []):
+                    capture[f'Size {num}'] = 'N/A'
+                else:
+                    capture[f'Size {num}'] = target.text
+
+            table = soup.find('table', class_='data-table')
+
+            if table:
+                tr = table.find_all('tr')
+
+                for item in tr:
+
+                    td_name = item.find('td', class_='spec-name')
+                    td_info = item.find('td', class_='spec-value')
+
+                    if td_name and td_info:
+                        name = td_name.text.strip()
+                        info = td_info.text.strip()
+                        capture[name] = info
+
+            save_list.append(capture)
 
 
 if os.path.exists('cookies.json'):  # This if statement is checking if a 'cookies.json' file exists or not
@@ -193,10 +232,10 @@ if os.path.exists('cookies.json'):  # This if statement is checking if a 'cookie
     logger.info('"Cookies.json" file exists! Reloading cookies...\n')
     for x, y in session.cookies.items():
         logger.info(f'{x}: {y}')
-    logger.info('\n')
 
 
 product_website = []
+collect = []
 
 response = fetch_website(url, 120)
 time.sleep(3)
@@ -206,7 +245,13 @@ time.sleep(2)
 wallpaper = main_page_ingest(soup, product_website)
 print()
 
-product_info = product_page_ingest(product_website)
+product_info = product_page_ingest(product_website, collect)
 
+data = pd.DataFrame(collect)
+data.to_excel('Wallpaper_listings.xlsx', index=False)
+logger.info('Data has been successfully stored into a .xlsx file!')
+
+data.to_csv('Wallpaper_listings.csv', index=False)
+logger.info('Data has also been successfully stored into a .csv file!')
 
 session.close()
