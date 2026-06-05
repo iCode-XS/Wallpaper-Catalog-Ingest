@@ -11,7 +11,6 @@ import pandas as pd
 
 logger.add('scraper.log', rotation='10 MB')
 
-
 url = 'https://www.yorkwallcoverings.com/wallpaper-york'
 
 session = httpx.Client(headers=user_agents.brave_linux, http2=True)
@@ -65,6 +64,9 @@ def parsing_site(httpx_object):
 
 def main_page_ingest(bs4_object, website_list):
     item_box = bs4_object.find_all('div', class_='item-box')
+    next_page_container = bs4_object.find('li', class_='next-page')
+    next_page = next_page_container.find('a')['href']
+
     print('Number of items in the page:', len(item_box))
     print('\n')
     print('York Wallcoverings Wallpaper Catalog Showcase:')
@@ -102,6 +104,8 @@ def main_page_ingest(bs4_object, website_list):
         print()'''
 
         website_list.append(base_url + product_link + '/' + sku_number_final)
+
+    return next_page
 
 
 def product_page_ingest(links_list, save_list):
@@ -223,6 +227,38 @@ def product_page_ingest(links_list, save_list):
             save_list.append(capture)
 
 
+def change_page(url, website_list, save_list):
+
+    while url:
+
+        try:
+            print()
+            logger.info('Requesting for the next page...')
+            print()
+            response1 = session.get(url, timeout=25, follow_redirects=True)
+            response1.raise_for_status()
+            logger.info(f'Request successful! Status Code: {response1.status_code}')
+            logger.info(f'Changing the page to: {response1.url}')
+
+        except httpx.HTTPStatusError as e:
+            logger.critical(f'Change page request failed for some reason! | {e.response.url} {e.response.status_code}')
+
+        try:
+            soup1 = BeautifulSoup(response1.text, 'lxml')
+            logger.info(f'Parsing successful for next page | URL: {response1.url}')
+
+        except Exception as e:
+            logger.error(f'Parsing has failed for some reason! | {e}')
+
+        save_list.clear()
+        website_list.clear()
+
+        next_page_url = main_page_ingest(soup1, website_list)
+        next_page_ingest = product_page_ingest(website_list, save_list)
+
+        url = next_page_url
+
+
 if os.path.exists('cookies.json'):  # This if statement is checking if a 'cookies.json' file exists or not
 
     with open('cookies.json', 'r') as f:    # If that file exists then it will reuse the cookies
@@ -242,10 +278,10 @@ time.sleep(3)
 browser_cookies()
 soup = parsing_site(response)
 time.sleep(2)
-wallpaper = main_page_ingest(soup, product_website)
+scroll_page = main_page_ingest(soup, product_website)
 print()
 
-product_info = product_page_ingest(product_website, collect)
+product_page = product_page_ingest(product_website, collect)
 
 data = pd.DataFrame(collect)
 data.to_excel('Wallpaper_listings.xlsx', index=False)
@@ -253,5 +289,7 @@ logger.info('Data has been successfully stored into a .xlsx file!')
 
 data.to_csv('Wallpaper_listings.csv', index=False)
 logger.info('Data has also been successfully stored into a .csv file!')
+
+change_page(scroll_page, product_website, collect)
 
 session.close()
