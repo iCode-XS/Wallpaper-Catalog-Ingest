@@ -52,24 +52,28 @@ def browser_cookies():  # This function looks and saves the cookies in a 'cookie
 
 
 @logger.catch
-def parsing_site(httpx_object):
+def parsing_site(httpx_object, page_tracker):
     try:
-        soup = BeautifulSoup(response, 'lxml')
-        logger.info('Parsing has been successful!\n')
+        soup = BeautifulSoup(httpx_object.text, 'lxml')
+        
+        page_tracker += 1
+
+        logger.info(f'Parsing has been successful for URL: {httpx_object.url}')
+        logger.info(f'Page number: {page_tracker}')
+        print()
         return soup
 
     except Exception as e:
         logger.critical('The parsing of HTML document has been failed... The script will not be able to hold without this function!', e)
 
 
-def main_page_ingest(bs4_object, website_list):
+def main_page_ingest(bs4_object, website_list, page_tracker):
     item_box = bs4_object.find_all('div', class_='item-box')
     next_page_container = bs4_object.find('li', class_='next-page')
     next_page = next_page_container.find('a')['href']
 
-    print('Number of items in the page:', len(item_box))
-    print('\n')
-    print('York Wallcoverings Wallpaper Catalog Showcase:')
+    page_tracker += 1
+    logger.info(f'Product link harvesting has been started for Page {page_tracker}')
     print()
 
     for x in item_box:
@@ -104,6 +108,8 @@ def main_page_ingest(bs4_object, website_list):
         print()'''
 
         website_list.append(base_url + product_link + '/' + sku_number_final)
+
+    logger.info(f'Product link harvesting has been successfully completed for Page {page_tracker}')
 
     return next_page
 
@@ -227,7 +233,7 @@ def product_page_ingest(links_list, save_list):
             save_list.append(capture)
 
 
-def change_page(url, website_list, save_list):
+def change_page(url, website_list, save_list, dataframe, page_tracker):
 
     while url:
 
@@ -238,6 +244,10 @@ def change_page(url, website_list, save_list):
             response1 = session.get(url, timeout=25, follow_redirects=True)
             response1.raise_for_status()
             logger.info(f'Request successful! Status Code: {response1.status_code}')
+            
+            page_tracker += 1
+
+            logger.info(f'Page number: {page_tracker + 1}')
             logger.info(f'Changing the page to: {response1.url}')
 
         except httpx.HTTPStatusError as e:
@@ -245,7 +255,7 @@ def change_page(url, website_list, save_list):
 
         try:
             soup1 = BeautifulSoup(response1.text, 'lxml')
-            logger.info(f'Parsing successful for next page | URL: {response1.url}')
+            logger.info(f'Parsing successful for Page {page_tracker + 1}')
 
         except Exception as e:
             logger.error(f'Parsing has failed for some reason! | {e}')
@@ -253,10 +263,22 @@ def change_page(url, website_list, save_list):
         save_list.clear()
         website_list.clear()
 
-        next_page_url = main_page_ingest(soup1, website_list)
+        next_page_url = main_page_ingest(soup1, website_list, page_tracker)
         next_page_ingest = product_page_ingest(website_list, save_list)
 
+        # Ingestion logic
+
+        dataframe.to_csv('Wallpaper_listings.csv', index=False, mode='a', header=False)
+
         url = next_page_url
+
+        corrected_value = page_tracker + 1
+
+        if corrected_value == 4:
+            print()
+            print(f'Page Stop is set to {corrected_value}')
+            print('Stopping the script from execution... Our objective is complete!')
+            return
 
 
 if os.path.exists('cookies.json'):  # This if statement is checking if a 'cookies.json' file exists or not
@@ -269,27 +291,29 @@ if os.path.exists('cookies.json'):  # This if statement is checking if a 'cookie
     for x, y in session.cookies.items():
         logger.info(f'{x}: {y}')
 
+current_page = 0
 
 product_website = []
 collect = []
 
 response = fetch_website(url, 120)
 time.sleep(3)
+
 browser_cookies()
-soup = parsing_site(response)
+
+soup = parsing_site(response, current_page)
 time.sleep(2)
-scroll_page = main_page_ingest(soup, product_website)
+
+scroll_page = main_page_ingest(soup, product_website, current_page)
 print()
 
 product_page = product_page_ingest(product_website, collect)
 
 data = pd.DataFrame(collect)
-data.to_excel('Wallpaper_listings.xlsx', index=False)
-logger.info('Data has been successfully stored into a .xlsx file!')
 
 data.to_csv('Wallpaper_listings.csv', index=False)
 logger.info('Data has also been successfully stored into a .csv file!')
 
-change_page(scroll_page, product_website, collect)
+change_page(scroll_page, product_website, collect, data, current_page)
 
 session.close()
