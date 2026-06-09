@@ -274,11 +274,11 @@ def change_page(url, website_list, save_list, dataframe, page_tracker):
 
         corrected_value = page_tracker + 1
 
-        if corrected_value == 4:
+        '''if corrected_value == 4:
             print()
             print(f'Page Stop is set to {corrected_value}')
             print('Stopping the script from execution... Our objective is complete!')
-            return
+            return'''
 
 
 if os.path.exists('cookies.json'):  # This if statement is checking if a 'cookies.json' file exists or not
