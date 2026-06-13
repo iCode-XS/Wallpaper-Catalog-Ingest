@@ -56,9 +56,7 @@ The screenshots given below are taken from the target website:
 
 ### Demo
 
-
-<video src="assets/terminal_recording_new.mp4" controls></video>
-
+<video src="https://github.com/user-attachments/assets/d3168cf3-abd6-490e-bb62-4a637218d194" width="600px" controls></video>
 
 You can check the sample of spreadsheet created during the recording of this video right here:
 
