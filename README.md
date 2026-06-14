@@ -85,6 +85,8 @@ This script is only taking public data and isn't breaking any rules! The creatio
 
 I am interested in the art of web scraping and only doing this for learning purposes! 
 
+<br>
+
 > **Robots.txt were last checked on date: 15 May, 2026**
 
 > **If anyone has any problems regarding this repo, please feel free to contact me!**
