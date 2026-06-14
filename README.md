@@ -88,7 +88,7 @@ I am interested in the art of web scraping and only doing this for learning purp
 > **Robots.txt were last checked on date: 15 May, 2026**
 
 > **If anyone has any problems regarding this repo, please feel free to contact me!**
-
+<br>
 Screenshots from website.com/robots.txt page are given below:
 
 <details>
