@@ -83,9 +83,9 @@ This is a data pipeline which is connected to the e-commerce site, which means t
 
 This script is only taking public data and isn't breaking any rules! The creation of this script is strictly following all the rules and regulations of the website given at robots.txt
 
-I am interested in the art of web scraping and only doing this for learning purposes! 
-
 <br>
+
+I am interested in the art of web scraping and only doing this for learning purposes! 
 
 > **Robots.txt were last checked on date: 15 May, 2026**
 
