@@ -59,7 +59,7 @@ You can check how the data looks like on the website by clicking below:
 
 <video src="https://github.com/user-attachments/assets/d3168cf3-abd6-490e-bb62-4a637218d194" width="600px" controls></video>
 
-You can check the sample of spreadsheet created during the recording of this video right here:
+You can check the sample of spreadsheet created during the full run of this project, right here:
 
 [Preview File](https://www.dropbox.com/scl/fi/3raqxla11ze8ajrb3j2dm/Wallpaper_listings.csv?rlkey=0o4q61togtrfjdew8nxwre0p7&st=b1c1h2az&dl=0) | [Download](https://www.dropbox.com/scl/fi/3raqxla11ze8ajrb3j2dm/Wallpaper_listings.csv?rlkey=0o4q61togtrfjdew8nxwre0p7&st=b1c1h2az&dl=1) 
 
@@ -107,7 +107,7 @@ Screenshots from website.com/robots.txt page are given below:
   
   * 16 datapoints per product
   * 24 products per page
-  * 82 pages in total(can change in future)
+  * 180 pages in total(can change in future)
 
 ### Tech Stack
 
