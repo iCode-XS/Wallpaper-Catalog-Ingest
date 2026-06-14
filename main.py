@@ -70,7 +70,7 @@ def parsing_site(httpx_object, page_tracker):
 def main_page_ingest(bs4_object, website_list, page_tracker):
     item_box = bs4_object.find_all('div', class_='item-box')
     next_page_container = bs4_object.find('li', class_='next-page')
-    next_page = next_page_container.find('a')['href']
+    next_page = next_page_container.find('a')['href'] if next_page_container else None
 
     page_tracker += 1
     logger.info(f'Product link harvesting has been started for Page {page_tracker}')
