@@ -57,7 +57,7 @@ You can check how the data looks like on the website by clicking below:
 
 ### Demo
 
-<video src="https://github.com/user-attachments/assets/d3168cf3-abd6-490e-bb62-4a637218d194" width="600px" controls></video>
+https://github.com/user-attachments/assets/533e0c0f-c493-48da-9cb3-e6424343defa
 
 You can check the sample of spreadsheet created during the full run of this project, right here:
 
